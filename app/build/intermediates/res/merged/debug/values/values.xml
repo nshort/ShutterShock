@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- From: file:/C:/Users/eric/Downloads/ShutterShock/ShutterShock/app/src/main/res/values/strings.xml -->
+    <eat-comment/>
+    <string-array name="filters_array">
+        <item>Date</item>
+        <item>Location</item>
+        <item>Album</item>
+        <item>File Size</item>
+    </string-array>
+    <string name="action_look">See Pictures</string>
+    <string name="action_takepic">Camera</string>
+    <string name="action_uploadpic">Upload</string>
+    <string name="action_websearch">Web search</string>
+    <string name="app_name">Shutter Shock</string>
+    <string name="app_not_available">Sorry, there\'s no web browser available</string>
+    <string name="drawer_close">Close navigation drawer</string>
+    <string name="drawer_open">Open navigation drawer</string>
+</resources>
