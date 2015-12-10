@@ -11,6 +11,7 @@ public class Contact {
 	public Contact() {
 
 	}
+	//comment test
 
 	// constructor
 	public Contact(int keyId, String name, byte[] image) {
