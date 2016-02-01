@@ -23,7 +23,8 @@ public class DataBaseHandler extends SQLiteOpenHelper {
 
 	// Contacts Table Columns names
 	private static final String KEY_ID = "id";
-	private static final String KEY_NAME = "name";
+	//private static final String KEY_NAME = "name";
+	private static final String DATE = "date";
 	private static final String KEY_IMAGE = "image";
 
 	public DataBaseHandler(Context context) {
@@ -34,8 +35,8 @@ public class DataBaseHandler extends SQLiteOpenHelper {
 	@Override
 	public void onCreate(SQLiteDatabase db) {
 		String CREATE_CONTACTS_TABLE = "CREATE TABLE " + TABLE_CONTACTS + "("
-				+ KEY_ID + " INTEGER PRIMARY KEY," + KEY_NAME + " TEXT,"
-				+ KEY_IMAGE + " BLOB" + ")";
+				+ KEY_ID + " INTEGER PRIMARY KEY,"
+				+ KEY_IMAGE + " TEXT," + DATE + " TEXT" + ")";
 		db.execSQL(CREATE_CONTACTS_TABLE);
 	}
 
@@ -65,9 +66,9 @@ public class DataBaseHandler extends SQLiteOpenHelper {
 		SQLiteDatabase db = this.getWritableDatabase();
 
 		ContentValues values = new ContentValues();
-		values.put(KEY_NAME, contact._name); // Contact Name
-		values.put(KEY_IMAGE, contact._image); // Contact Phone
-
+		//values.put(KEY_NAME, contact._name); // Contact Name
+		values.put(KEY_IMAGE, contact.imagePath); // Contact Phone
+		values.put(DATE, contact.date);
 		// Inserting Row
 		db.insert(TABLE_CONTACTS, null, values);
 		db.close(); // Closing database connection
@@ -77,14 +78,13 @@ public class DataBaseHandler extends SQLiteOpenHelper {
 	Contact getContact(int id) {
 		SQLiteDatabase db = this.getReadableDatabase();
 
-		Cursor cursor = db.query(TABLE_CONTACTS, new String[] { KEY_ID,
-				KEY_NAME, KEY_IMAGE }, KEY_ID + "=?",
-				new String[] { String.valueOf(id) }, null, null, null, null);
+		Cursor cursor = db.query(TABLE_CONTACTS, new String[]{KEY_ID,
+						KEY_IMAGE, DATE}, KEY_ID + "=?",
+				new String[]{String.valueOf(id)}, null, null, null, null);
 		if (cursor != null)
 			cursor.moveToFirst();
 
-		Contact contact = new Contact(Integer.parseInt(cursor.getString(0)),
-				cursor.getString(1), cursor.getBlob(1));
+		Contact contact = new Contact(Integer.parseInt(cursor.getString(0)), cursor.getString(1), cursor.getString(2));
 
 		// return contact
 		return contact;
@@ -95,7 +95,7 @@ public class DataBaseHandler extends SQLiteOpenHelper {
 	public List<Contact> getAllContacts() {
 		List<Contact> contactList = new ArrayList<Contact>();
 		// Select All Query
-		String selectQuery = "SELECT  * FROM contacts ORDER BY name";
+		String selectQuery = "SELECT  * FROM contacts ORDER BY image";
 
 		SQLiteDatabase db = this.getWritableDatabase();
 		Cursor cursor = db.rawQuery(selectQuery, null);
@@ -104,9 +104,38 @@ public class DataBaseHandler extends SQLiteOpenHelper {
 			do {
 				Contact contact = new Contact();
 				contact.setID(Integer.parseInt(cursor.getString(0)));
-				contact.setName(cursor.getString(1));
-				contact.setImage(cursor.getBlob(2));
+				//contact.setName(cursor.getString(1));
+				contact.setImage(cursor.getString(1));
 				// Adding contact to list
+				contact.setDate(cursor.getString(2));
+				contactList.add(contact);
+			} while (cursor.moveToNext());
+		}
+
+
+		// close inserting data from database
+		db.close();
+		// return contact list
+		return contactList;
+
+	}
+
+	public List<Contact> getContactsByDate() {
+		List<Contact> contactList = new ArrayList<Contact>();
+		// Select All Query
+		String selectQuery = "SELECT  * FROM contacts ORDER BY date";
+
+		SQLiteDatabase db = this.getWritableDatabase();
+		Cursor cursor = db.rawQuery(selectQuery, null);
+		// looping through all rows and adding to list
+		if (cursor.moveToFirst()) {
+			do {
+				Contact contact = new Contact();
+				contact.setID(Integer.parseInt(cursor.getString(0)));
+				//contact.setName(cursor.getString(1));
+				contact.setImage(cursor.getString(1));
+				// Adding contact to list
+				contact.setDate(cursor.getString(2));
 				contactList.add(contact);
 			} while (cursor.moveToNext());
 		}
@@ -124,8 +153,9 @@ public class DataBaseHandler extends SQLiteOpenHelper {
 		SQLiteDatabase db = this.getWritableDatabase();
 
 		ContentValues values = new ContentValues();
-		values.put(KEY_NAME, contact.getName());
+		//values.put(KEY_NAME, contact.getName());
 		values.put(KEY_IMAGE, contact.getImage());
+		values.put(DATE, contact.getDate());
 
 		// updating row
 		return db.update(TABLE_CONTACTS, values, KEY_ID + " = ?",

@@ -17,9 +17,15 @@
 package com.example.android.shuttershock;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+import java.util.Random;
 
 import android.app.Activity;
 import android.app.Fragment;
@@ -34,6 +40,7 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.view.GravityCompat;
@@ -52,6 +59,10 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.Date;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 
 /**
  * This example illustrates a common usage of the DrawerLayout widget
@@ -85,18 +96,21 @@ public class MainActivity extends Activity {
     private ListView mDrawerList;
     private ActionBarDrawerToggle mDrawerToggle;
 
+
     private CharSequence mDrawerTitle;
     private CharSequence mTitle;
     private String[] mfilterTitles;
     Bitmap bmp2;
+    private boolean picTaken = false;
     ArrayList<Contact> imageArry = new ArrayList<Contact>();
     ContactImageAdapter adapter;
     //TextView textView;
 
     int i = 12;
     private static final int SELECT_PICTURE = 1; //intent code to select a picture
+    String picPathData = "";
 
-
+    ListView dataList;
 
 
     @Override
@@ -109,11 +123,10 @@ public class MainActivity extends Activity {
         readContacts();
        // textView = (TextView)findViewById(R.id.textView);
 
-        adapter = new ContactImageAdapter(this, R.layout.screen_list,
+       adapter = new ContactImageAdapter(this, R.layout.screen_list,
                 imageArry);
-        ListView dataList = (ListView) findViewById(R.id.list);
+        dataList = (ListView) findViewById(R.id.list);
         dataList.setAdapter(adapter);
-
 
 
         mTitle = mDrawerTitle = getTitle();
@@ -180,28 +193,97 @@ public class MainActivity extends Activity {
             DataBaseHandler db = new DataBaseHandler(this);
 
 
+            String randomStringForPic ="";
+            int length = 12;
+            randomString(length);
+            randomStringForPic = randomString(length);
+            picPathData =   randomStringForPic;
+
+
             //Compresses the bitmap into a byte array,
             //which the database can read as a BLOB
-            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+           /* ByteArrayOutputStream stream = new ByteArrayOutputStream();
             photo.compress(Bitmap.CompressFormat.JPEG, 100, stream);
-            byte imageInByte[] = stream.toByteArray();
+            byte imageInByte[] = stream.toByteArray(); */
 
             //Adds the picture into the contact class
-            db.addContact(new Contact("another pic5" +
-                    "", imageInByte));
+           // db.addContact(new Contact(picPathData);
+            String y = makeDate();
+            Contact contact = new Contact(picPathData, y);
+            db.addContact(contact);
 
             db.close();
+
+            /* //Saves the image to the user's SD card
+            File sdCardDirectory = Environment.getExternalStorageDirectory();
+            File image = new File(sdCardDirectory, picPathData + ".png");
+
+            Uri imageUri = Uri.fromFile(image);
+            */
+
+            //Create Folder
+            File folder = new File(Environment.getExternalStorageDirectory().toString()+"/ShutterShockFolder");
+            folder.mkdirs();
+
+            //Save the path as a string value
+            String extStorageDirectory = folder.toString();
+
+            //Create New file and name it Image2.PNG
+            File image = new File(extStorageDirectory, picPathData + ".PNG");
+
+            Uri imageUri = Uri.fromFile(image);
+
+            //Send a broadcast so that the image that was just taken is saved to the users SD card
+            sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, imageUri ));
+
+
+
+            boolean success = false;
+
+            FileOutputStream outStream;
+            try {
+
+                //COnverts the image into a smaller form while still trying to keep the quality of the image
+                outStream = new FileOutputStream(image);
+                photo.compress(Bitmap.CompressFormat.PNG, 100, outStream);
+        /* 100 to keep full quality of the image */
+
+                outStream.flush();
+                outStream.close();
+                success = true;
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
+            //If image is saved tell the user and if not then tell the user
+            if (success) {
+                Toast.makeText(getApplicationContext(), "Image Saved",
+                        Toast.LENGTH_LONG).show();
+                picTaken = true;
+            } else {
+                Toast.makeText(getApplicationContext(),
+                        "Photo not saved", Toast.LENGTH_LONG).show();
+            }
+
+
+
+            readContacts();
+            // textView = (TextView)findViewById(R.id.textView);
+
+            dataList.setAdapter(adapter);
+
         } else if (requestCode == SELECT_PICTURE) {
 
-            if (data != null && resultCode == RESULT_OK)
-            {
+            if (data != null && resultCode == RESULT_OK) {
 
                 Uri selectedImage = data.getData();
 
-                if (selectedImage == null){
+                if (selectedImage == null) {
                     Log.d("Status", "data is null");
-                }
-                else{
+                } else {
                     Log.d("Status", "data is not null");
                 }
                 String[] filePathColumn = {MediaStore.Images.Media.DATA};
@@ -211,48 +293,142 @@ public class MainActivity extends Activity {
                 String filePath = cursor.getString(columnIndex);
                 cursor.close();
 
-                if(bmp2 != null && !bmp2.isRecycled())
-                {
+                if (bmp2 != null && !bmp2.isRecycled()) {
                     bmp2 = null;
                 }
 
                 Log.d("Status:", filePath);
-               // textView.setText(filePath);
+                // textView.setText(filePath);
                 bmp2 = BitmapFactory.decodeFile(filePath);
                 //ivGalImg.setBackgroundResource(0);
                 //ivGalImg.setImageBitmap(bmp);
                 DataBaseHandler db = new DataBaseHandler(this);
 
+                String randomStringForPic = "";
+                int length = 12;
+                randomString(length);
+                randomStringForPic = randomString(length);
+                picPathData = randomStringForPic;
 
+
+                //Compresses the bitmap into a byte array,
+                //which the database can read as a BLOB
+           /* ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            photo.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+            byte imageInByte[] = stream.toByteArray(); */
+
+                //Adds the picture into the contact class
+                // db.addContact(new Contact(picPathData);
+                String y = makeDate();
+                Contact contact = new Contact(picPathData, y);
+                db.addContact(contact);
+
+                db.close();
+
+                //Saves the image to the user's SD card
+               /* File sdCardDirectory = Environment.getExternalStorageDirectory();
+                File image = new File(sdCardDirectory, picPathData + ".png");
+
+                Uri imageUri = Uri.fromFile(image);
+
+*/
+                //Create Folder
+                File folder = new File(Environment.getExternalStorageDirectory().toString()+"/ShutterShockFolder");
+                folder.mkdirs();
+
+                //Save the path as a string value
+                String extStorageDirectory = folder.toString();
+
+                //Create New file and name it Image2.PNG
+                File image = new File(extStorageDirectory, picPathData + ".PNG");
+
+                Uri imageUri = Uri.fromFile(image);
+
+                //Send a broadcast so that the image that was just taken is saved to the users SD card
+                sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, imageUri));
+
+
+                boolean success = false;
+
+                FileOutputStream outStream;
+                try {
+
+                    //COnverts the image into a smaller form while still trying to keep the quality of the image
+                    outStream = new FileOutputStream(image);
+                    bmp2.compress(Bitmap.CompressFormat.PNG, 100, outStream);
+        /* 100 to keep full quality of the image */
+
+                    outStream.flush();
+                    outStream.close();
+                    success = true;
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+
+                //If image is saved tell the user and if not then tell the user
+                if (success) {
+                    Toast.makeText(getApplicationContext(), "Image Saved",
+                            Toast.LENGTH_LONG).show();
+                    picTaken = true;
+                } else {
+                    Toast.makeText(getApplicationContext(),
+                            "Photo not saved", Toast.LENGTH_LONG).show();
+                }
+
+
+/*
                 //Compresses the bitmap into a byte array,
                 //which the database can read as a BLOB
                 if (bmp2 != null) {
                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
                     bmp2.compress(Bitmap.CompressFormat.JPEG, 100, stream);
-                    byte imageInByte[] = stream.toByteArray();
+                    byte imageInByte[] = stream.toByteArray(); */
 
-
+/* I'm going to finish this after pic taken is fixed
                     //Adds the picture into the contact class
                     db.addContact(new Contact(i, "gallery picture" +
                             "", imageInByte));
                     i++;
-                }
-                db.close();
-            }
-            else
-            {
-                Log.d("Status:", "Photopicker canceled");
-            }
 
+                    */
+                readContacts();
+                // textView = (TextView)findViewById(R.id.textView);
+
+                dataList.setAdapter(adapter);
+            }
         }
+
+
     }
 
 
     public void readContacts () {
+        imageArry.clear();
         DataBaseHandler db = new DataBaseHandler(this);
         List<Contact> contacts = db.getAllContacts();
         for (Contact cn : contacts) {
-            String log = "ID:" + cn.getID() + " Name: " + cn.getName()
+            String log = "ID:" + cn.getID()
+                    + " ,Image: " + cn.getImage();
+
+            // Writing Contacts to log
+            Log.d("Result: ", log);
+            //add contacts data in arrayList
+            imageArry.add(cn);
+
+        }
+        db.close();
+    }
+
+
+    public void readDates () {
+        imageArry.clear();
+        DataBaseHandler db = new DataBaseHandler(this);
+        List<Contact> contacts = db.getContactsByDate();
+        for (Contact cn : contacts) {
+            String log = "ID:" + cn.getID()
                     + " ,Image: " + cn.getImage();
 
             // Writing Contacts to log
@@ -340,6 +516,7 @@ public class MainActivity extends Activity {
         }
     }
 
+
     private void selectItem(int position) {
         // update the main content by replacing fragments
         Fragment fragment = new filterFragment();
@@ -354,6 +531,12 @@ public class MainActivity extends Activity {
         mDrawerList.setItemChecked(position, true);
         setTitle(mfilterTitles[position]);
         mDrawerLayout.closeDrawer(mDrawerList);
+
+/*
+            if (position == 0) {
+                readDates();
+                dataList.setAdapter(adapter);
+            } */
 
     }
 
@@ -432,4 +615,30 @@ public class MainActivity extends Activity {
             Log.d("Param", "Finished");
         }
     }
-}
+
+    public String randomString(int length){
+
+        //Generates a random name for the image that the user has taken
+
+        //THis is the alphabet that I will be using for the name
+        final String AB = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        Random rnd = new Random();
+
+
+        //Use a string buiolder to build a sequence of random numbers based on the length that is passed in the parameter
+        StringBuilder sb = new StringBuilder( length );
+        for( int i = 0; i < length; i++ )
+            sb.append( AB.charAt( rnd.nextInt(AB.length()) ) );
+        return sb.toString();
+    }
+
+    public String makeDate (){
+        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        //get current date time with Date()
+        Date date = new Date();
+        String x = dateFormat.format(date).toString();
+
+
+        return x;
+    }
+    }

@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Environment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,6 +41,7 @@ public class ContactImageAdapter extends ArrayAdapter<Contact>{
 	            holder = new ImageHolder();
 	            holder.txtTitle = (TextView)row.findViewById(R.id.txtTitle);
 	            holder.imgIcon = (ImageView)row.findViewById(R.id.imgIcon);
+				holder.textView = (TextView)row.findViewById(R.id.textView);
 	            row.setTag(holder);
 	        }
 	        else
@@ -48,13 +50,17 @@ public class ContactImageAdapter extends ArrayAdapter<Contact>{
 	        }
 	       
 	        Contact picture = data.get(position);
-	        holder.txtTitle.setText(picture._name);
+	        holder.txtTitle.setText(picture.imagePath);
+			holder.textView.setText(picture.date);
 	        //convert byte to bitmap take from contact class
 	        
-	        byte[] outImage=picture._image;
+	       /* byte[] outImage=picture._image;
 	        ByteArrayInputStream imageStream = new ByteArrayInputStream(outImage);
 	        Bitmap theImage = BitmapFactory.decodeStream(imageStream);
-	        holder.imgIcon.setImageBitmap(theImage);
+	        holder.imgIcon.setImageBitmap(theImage); */
+
+			Bitmap bitmap = BitmapFactory.decodeFile(Environment.getExternalStorageDirectory() + "/ShutterShockFolder/" + picture.getImage() +".png");
+			holder.imgIcon.setImageBitmap(bitmap);
 	       return row;
 	       
 	    }
@@ -63,5 +69,6 @@ public class ContactImageAdapter extends ArrayAdapter<Contact>{
 	    {
 	        ImageView imgIcon;
 	        TextView txtTitle;
+			TextView textView;
 	    }
 	}
